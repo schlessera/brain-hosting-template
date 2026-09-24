@@ -8,13 +8,15 @@ hosting template. It moved here from brain-kit (schlessera/brain-kit#303).
 brain-kit keeps the parts that reach into its packages (the pi backend's
 in-process `initContext` call, and the exec wrapper the backends need) and
 cites this record for them. Citations into brain-kit carry a `[brain-kit]`
-prefix. Where the record says "today", "current" or "the image", it means the
-first image the design was measured on, which is not public. This template's
-own container files will carry the design; until they exist, the record states
-what that image did and cites no file for it.
+prefix. "Today", "current" and "the image" describe the root-run starting
+point this design migrates from: tools installed under `/root`, supervisord and
+cron running as root, state in volumes. That is the shape a first brain-kit
+container tends to take, and the migration steps assume it. An image that
+starts elsewhere keeps the target layout and skips the steps that do not apply.
+This template's own container files will carry the target.
 
-**Investigated against:** brain-kit `e8b8d9ea4985`, that image as of the same
-date, installed `@earendil-works/pi-coding-agent` 0.84.4 and
+**Investigated against:** brain-kit `e8b8d9ea4985`, a root-run image of that
+shape, installed `@earendil-works/pi-coding-agent` 0.84.4 and
 `@anthropic-ai/claude-agent-sdk` 0.3.265. **No container was built or run for
 this record** — the measurements below that were taken live are marked as such,
 and the C helper's source is unbuilt.
@@ -66,9 +68,9 @@ numeric ids are part of the on-disk format: names are only presentation, while
 volumes store numbers. “Volume” includes a named volume or a deployment bind
 mount. Both preserve inode ownership across an image replacement; changing
 `RUN chown` in a Dockerfile changes only a new volume's seed, not an existing
-volume. The current compose mounts the brain, DB, logs, Claude and pi trees as
-volumes, and a Coolify deployment of it uses
-persistent binds.
+volume. A root-run starting image typically mounts the brain, DB, logs, Claude
+and pi trees as named volumes, or as persistent binds on a platform such as
+Coolify; the migration has to handle both.
 
 | Path | Owner:group | Mode | Volume? | Purpose and rule |
 | --- | --- | ---: | --- | --- |
@@ -106,8 +108,8 @@ persistent binds.
 
 The app tree and toolchain are executable, never mutable, by either runtime
 uid. The server program becomes `user=brain` with explicit
-`HOME=/home/brain`, `USER=brain` and `umask=002`; current supervisord runs it
-as root from `/root/.bun`. Cron
+`HOME=/home/brain`, `USER=brain` and `umask=002`, where a root-run image
+starts it as root from `/root/.bun`. Cron
 remains a root daemon but its generated job user becomes `brain`. Each wrapper
 that crosses into repository work sets `umask 0002` again; relying only on the
 parent daemon's umask is too fragile.

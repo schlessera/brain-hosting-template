@@ -8,11 +8,13 @@ hosting template. It moved here from brain-kit (schlessera/brain-kit#303).
 brain-kit keeps the parts that reach into its packages (the pi backend's
 in-process `initContext` call, and the exec wrapper the backends need) and
 cites this record for them. Citations into brain-kit carry a `[brain-kit]`
-prefix. Files of the deployment the design was measured on are named without
-line numbers, because that deployment is not a public repository.
+prefix. Where the record says "today", "current" or "the image", it means the
+first image the design was measured on, which is not public. This template's
+own container files will carry the design; until they exist, the record states
+what that image did and cites no file for it.
 
-**Investigated against:** brain-kit `e8b8d9ea4985`, the reference deployment of
-that date, installed `@earendil-works/pi-coding-agent` 0.84.4 and
+**Investigated against:** brain-kit `e8b8d9ea4985`, that image as of the same
+date, installed `@earendil-works/pi-coding-agent` 0.84.4 and
 `@anthropic-ai/claude-agent-sdk` 0.3.265. **No container was built or run for
 this record** — the measurements below that were taken live are marked as such,
 and the C helper's source is unbuilt.
@@ -65,20 +67,20 @@ volumes store numbers. “Volume” includes a named volume or a deployment bind
 mount. Both preserve inode ownership across an image replacement; changing
 `RUN chown` in a Dockerfile changes only a new volume's seed, not an existing
 volume. The current compose mounts the brain, DB, logs, Claude and pi trees as
-volumes (the reference deployment's `docker-compose.yml`), and the Coolify example uses
-persistent binds (the reference deployment's `docs/examples/docker-compose.coolify.yml`).
+volumes, and a Coolify deployment of it uses
+persistent binds.
 
 | Path | Owner:group | Mode | Volume? | Purpose and rule |
 | --- | --- | ---: | --- | --- |
 | `/opt` | `root:root` | `0755` | no | Immutable executable prefix. Neither runtime uid may write it. |
 | `/bin`, `/usr/bin`, `/usr/sbin` | `root:root` | dirs `0755`; packaged files unchanged | no | Immutable distro shell, Git, cron, syslog, supervisor and utility executables. Runtime code uses absolute paths for security-sensitive spawns; package-manager ownership is the image invariant. |
-| `/opt/bun/bin/bun` | `root:root` | `0755` | no | Bun copied from the pinned build image. Replaces today's `/root/.bun/bin/bun` (the reference deployment's `Dockerfile`). |
-| `/opt/claude/bin/claude` | `root:root` | `0755` | no | Real Claude CLI file, not a symlink into a home directory. Replaces the current `/root/.local/bin` install and symlink (the reference deployment's `Dockerfile`). |
-| `/opt/rtk/bin/rtk` | `root:root` | `0755` | no | Trusted rewrite executable. Today's copy is `/usr/local/bin/rtk` (the reference deployment's `Dockerfile`); 0.35.0 moves all three non-distro tools under `/opt`. |
+| `/opt/bun/bin/bun` | `root:root` | `0755` | no | Bun copied from the pinned build image. Replaces today's `/root/.bun/bin/bun`. |
+| `/opt/claude/bin/claude` | `root:root` | `0755` | no | Real Claude CLI file, not a symlink into a home directory. Replaces the current `/root/.local/bin` install and symlink. |
+| `/opt/rtk/bin/rtk` | `root:root` | `0755` | no | Trusted rewrite executable. Today's copy is `/usr/local/bin/rtk`; 0.35.0 moves all three non-distro tools under `/opt`. |
 | `/opt/brain-toolchain` | `root:root` | dirs `0755`, files `0644` | no | Standalone, lockfile-pinned install containing `@schlessera/brain`; never resolved from `/data/brain`. |
 | `/opt/brain-toolchain/node_modules/.bin/brain` | `root:root` | `0755` | no | The only core CLI entrypoint used by server, cron or entrypoint. The current server chooses the repo bin at `brainCliCommand`, `[brain-kit] packages/ui-server/src/brain/client.ts:78-81`. |
 | `/opt/brain-toolchain/hooks` | `root:root` | dir `0755`, hooks `0755` | no | Hooks copied from the same installed core package. The current setup instead copies them into agent-writable `.githooks` and sets a relative path (`join(root, ".githooks")`, `[brain-kit] packages/core/src/cli/hooks-util.ts:49-66`). |
-| `/opt/brain-ui` | `root:root` | dirs `0755`, files `0644`, bins `0755` | no | App source, dependencies, entrypoints and `brain-ui-cron`. The image already copies the app here (the reference deployment's `Dockerfile`); it must remain non-writable at runtime. |
+| `/opt/brain-ui` | `root:root` | dirs `0755`, files `0644`, bins `0755` | no | App source, dependencies, entrypoints and `brain-ui-cron`. The image already copies the app here; it must remain non-writable at runtime. |
 | `/opt/brain-ui/bin/brain-agent-exec` | `root:brain` | `4750` | no | The helper in section 2. Only root or members of `brain` can enter it; it accepts callers root or uid `brain`, drops permanently to `agent`, then `exec`s. |
 | `/opt/brain-ui/pi-extensions` | `root:root` | dirs `0755`, files `0644` | no | Exact image-installed pi extension set. Project and mutable global extension discovery are disabled. |
 | `/home/brain` | `brain:brain` | `0700` | no | Server `HOME`; only ordinary caches/config which cannot grant agent capability belong here. |
@@ -87,17 +89,17 @@ persistent binds (the reference deployment's `docs/examples/docker-compose.cooli
 | `/data/brain/.git` | `brain:brain` | dirs `2775`, ordinary files `0664` | part of `brain` | Mixed-uid Git metadata. No root/`brain` process runs Git here; repo Git runs as `agent`. |
 | `/data/brain/node_modules` | `agent:brain` after install | dirs `2775`, regular files `0664`, executable files `0775` | part of `brain` | Untrusted. `bun install` runs only as `agent`; no executable below it is selected by server, cron or entrypoint. |
 | `/data/brain/brain.db` | creating user:`brain` | `0660` | part of `brain` | Disposable content index, not the server DB. Both users may rebuild it. |
-| `/data/brain/logs` | creating user:`brain` | `2775` dir, `0664` files | part of `brain` | Content-job logs. The entrypoint currently creates it at the reference deployment's `scripts/entrypoint.sh`. |
+| `/data/brain/logs` | creating user:`brain` | `2775` dir, `0664` files | part of `brain` | Content-job logs. The entrypoint currently creates it. |
 | `/data/db` | `brain:brain` | `0700` | **yes: `db`** | Server authority boundary. `agent` is a different uid, so group membership does not grant traversal. This is the deliberate exception to group sharing. |
 | `/data/db/brain-ui.db`, `-wal`, `-shm` | `brain:brain` | `0600` | part of `db` | Sessions, passkeys, settings and activity. Server and the `brain` cron recorder use it; agent children receive neither access nor a file descriptor. |
 | `/data/db/pi` | `brain:brain` | `0700` | **yes: existing `pi`, remounted here; Coolify may use `db`** | pi auth/settings/state. Because the recommended design keeps pi in-process under `brain`, `PI_CODING_AGENT_DIR` points here and the restricted shell cannot traverse `/data/db`. This resolves the apparent conflict between pi persistence and DB denial. |
-| `/data/db/logs` | `brain:brain` | dir `0750`, files `0640` | part of `db` fallback | Persistent fallback when `/var/log/brain-ui` is not independently mounted, preserving today's redirect behavior (the reference deployment's `scripts/entrypoint.sh`). |
+| `/data/db/logs` | `brain:brain` | dir `0750`, files `0640` | part of `db` fallback | Persistent fallback when `/var/log/brain-ui` is not independently mounted, preserving today's redirect behavior. |
 | `/data/db/.uid-layout-v1` | `brain:brain` | `0600` | part of `db` | Idempotent migration marker, written only after every ownership/access assertion passes. |
-| `/data/claude` (`CLAUDE_CONFIG_DIR`) | `agent:brain` | top/dirs `2770`, files `0660` | **yes: existing `claude`, new target** | Claude CLI writes transcripts as `agent`; server-side SDK history readers running as `brain` must read them. Set `CLAUDE_CONFIG_DIR` explicitly for parent and child. The current volume is `/root/.claude` (the reference deployment's `docker-compose.yml`). Whether the real CLI honors the required file mode remains a proof item in section 5. |
+| `/data/claude` (`CLAUDE_CONFIG_DIR`) | `agent:brain` | top/dirs `2770`, files `0660` | **yes: existing `claude`, new target** | Claude CLI writes transcripts as `agent`; server-side SDK history readers running as `brain` must read them. Set `CLAUDE_CONFIG_DIR` explicitly for parent and child. The current volume is `/root/.claude`. Whether the real CLI honors the required file mode remains a proof item in section 5. |
 | `/var/log/brain-ui` | `brain:brain` | dir `2770`, files `0640` | **yes: `logs`**, or symlink to DB fallback | Persistent cron/syslog output. Root syslog may create files; `brain` may read them. |
-| `/var/log/supervisor` | `root:root` | dir `0755`, files `0600`/`0640` | no | Ephemeral supervisor child logs. Current entrypoint creates it (the reference deployment's `scripts/entrypoint.sh`). |
-| `/etc/cron.d/brain-ui` | `root:root` | `0644` | no; regenerated | Validated crontab. Lines run as `brain`, replacing current `CRONTAB_USER=root` (the reference deployment's `scripts/entrypoint.sh`). |
-| `/etc/environment` | `root:root` | `0600` | no; regenerated | Cron's secret-bearing allowlist. Root cron reads it before dropping to the job user; neither runtime user may read it. Current generation is the reference deployment's `scripts/entrypoint.sh`. |
+| `/var/log/supervisor` | `root:root` | dir `0755`, files `0600`/`0640` | no | Ephemeral supervisor child logs. Current entrypoint creates it. |
+| `/etc/cron.d/brain-ui` | `root:root` | `0644` | no; regenerated | Validated crontab. Lines run as `brain`, replacing current `CRONTAB_USER=root`. |
+| `/etc/environment` | `root:root` | `0600` | no; regenerated | Cron's secret-bearing allowlist. Root cron reads it before dropping to the job user; neither runtime user may read it. The entrypoint generates it today. |
 | `/run/supervisord.pid`, cron/syslog runtime files | `root:root` | service defaults | no | Supervisor, cron and syslog remain root control processes; only the app child changes uid. |
 | `/tmp/brain-activity-sink-*` | `brain:brain` initially, child append access explicitly granted | `0660` | no | Cron recorder creates and later ingests the span sink (`const sinkPath`, `[brain-kit] packages/ui-server/src/cron/run-job.ts:211-217`). Creation must be race-safe (`open(O_CREAT|O_EXCL|O_NOFOLLOW)`) before its path reaches an `agent` child. |
 | `/usr/bin/google-chrome-stable` and `/opt/google/chrome/chrome-sandbox` | `root:root` | `0755` and `4755` | no | Chrome runs as `brain`; the distro's setuid sandbox helper must retain its bit. The renderer adds no sandbox-disabling args by default (`createRenderer`, `[brain-kit] packages/ui-render-puppeteer/src/renderer.ts:130-165`). |
@@ -105,7 +107,7 @@ persistent binds (the reference deployment's `docs/examples/docker-compose.cooli
 The app tree and toolchain are executable, never mutable, by either runtime
 uid. The server program becomes `user=brain` with explicit
 `HOME=/home/brain`, `USER=brain` and `umask=002`; current supervisord runs it
-as root from `/root/.bun` (the reference deployment's `config/supervisord.conf`). Cron
+as root from `/root/.bun`. Cron
 remains a root daemon but its generated job user becomes `brain`. Each wrapper
 that crosses into repository work sets `umask 0002` again; relying only on the
 parent daemon's umask is too fragile.
@@ -498,9 +500,8 @@ Today the server resolves `<brainPath>/node_modules/.bin/brain` on every call
 and falls back to repo `scripts/brain-cli.ts`
 (`brainCliCommand`, `[brain-kit] packages/ui-server/src/brain/client.ts:78-82`), then
 spawns that selection (`Bun.spawn(wrapCommand`, `[brain-kit] packages/ui-server/src/brain/client.ts:199-212`).
-The root entrypoint runs `bun install` in the repo
-(the reference deployment's `scripts/entrypoint.sh`), installs a dispatcher which again
-executes repo code (the reference deployment's `scripts/brain-dispatch.sh`), and asks
+The root entrypoint runs `bun install` in the repo, installs a dispatcher which again
+executes repo code, and asks
 `brain-ui-cron` to run `brain module list` during crontab generation
 (`readModuleList`,
 `[brain-kit] packages/ui-server/src/bin/brain-ui-cron.ts:97-130,155-158`). A shared repo
@@ -582,8 +583,7 @@ The two viable options are:
    paths from `/opt/brain-ui/pi-extensions`. Construct `SettingsManager` with
    `{ projectTrusted: false }`; configure the resource loader so repo `.pi`,
    project package entries and mutable global extension directories are never
-   imported. Installed web/MCP/subagent extensions move from runtime install
-   (the reference deployment's `scripts/entrypoint.sh`) into the root-owned image.
+   imported. Installed web/MCP/subagent extensions move from runtime install into the root-owned image.
 2. Move the entire pi runtime to an out-of-process worker under uid `agent`.
    Then even a loaded extension and its `exec()` child have only agent
    privileges, but session streaming, bridge callbacks, auth/state access and
@@ -690,8 +690,7 @@ each before 0.35.0 treats them as acceptance criteria:
    browser process).
 4. **The fixture blocks its own restart and sync proofs.** The seed has no
    ignore rules, so planting `.githooks` and `node_modules` leaves the tree
-   dirty and the entrypoint deliberately skips its pull on a dirty tree
-   (the reference deployment's `scripts/entrypoint.sh`). Seed ignore rules, assert a clean
+   dirty and the entrypoint deliberately skips its pull on a dirty tree. Seed ignore rules, assert a clean
    tree immediately before the restart, and give `agent` write access to the
    throwaway remote plus a git identity, or the push in the sync proof cannot
    run.

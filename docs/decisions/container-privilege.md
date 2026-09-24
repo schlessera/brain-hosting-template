@@ -52,7 +52,7 @@ and each would have passed against a broken implementation.
 
 The critical refinement to the earlier plan is that an owned `brain`
 executable is not enough. The CLI imports `brain.config.ts` directly
-(`loadUserConfig`, `[brain-kit] packages/core/src/lib/config.ts:353-368`) and imports both
+(`loadUserConfig`, `[brain-kit] packages/core/src/lib/config.ts:357-372`) and imports both
 repo-local and repo-resolved modules
 (`importManifest`, `[brain-kit] packages/core/src/lib/module-loader.ts:130-162`). Those
 are agent-writable executable inputs. Consequently, the server, cron and root
@@ -80,7 +80,7 @@ Coolify; the migration has to handle both.
 | `/opt/claude/bin/claude` | `root:root` | `0755` | no | Real Claude CLI file, not a symlink into a home directory. Replaces the current `/root/.local/bin` install and symlink. |
 | `/opt/rtk/bin/rtk` | `root:root` | `0755` | no | Trusted rewrite executable. Today's copy is `/usr/local/bin/rtk`; 0.35.0 moves all three non-distro tools under `/opt`. |
 | `/opt/brain-toolchain` | `root:root` | dirs `0755`, files `0644` | no | Standalone, lockfile-pinned install containing `@schlessera/brain`; never resolved from `/data/brain`. |
-| `/opt/brain-toolchain/node_modules/.bin/brain` | `root:root` | `0755` | no | The only core CLI entrypoint used by server, cron or entrypoint. The current server chooses the repo bin at `brainCliCommand`, `[brain-kit] packages/ui-server/src/brain/client.ts:78-81`. |
+| `/opt/brain-toolchain/node_modules/.bin/brain` | `root:root` | `0755` | no | The only core CLI entrypoint used by server, cron or entrypoint. The current server chooses the repo bin at `brainCliCommand`, `[brain-kit] packages/ui-server/src/brain/client.ts:80-83`. |
 | `/opt/brain-toolchain/hooks` | `root:root` | dir `0755`, hooks `0755` | no | Hooks copied from the same installed core package. The current setup instead copies them into agent-writable `.githooks` and sets a relative path (`join(root, ".githooks")`, `[brain-kit] packages/core/src/cli/hooks-util.ts:49-66`). |
 | `/opt/brain-ui` | `root:root` | dirs `0755`, files `0644`, bins `0755` | no | App source, dependencies, entrypoints and `brain-ui-cron`. The image already copies the app here; it must remain non-writable at runtime. |
 | `/opt/brain-ui/bin/brain-agent-exec` | `root:brain` | `4750` | no | The helper in section 2. Only root or members of `brain` can enter it; it accepts callers root or uid `brain`, drops permanently to `agent`, then `exec`s. |
@@ -500,8 +500,8 @@ agent's own capabilities.
 
 Today the server resolves `<brainPath>/node_modules/.bin/brain` on every call
 and falls back to repo `scripts/brain-cli.ts`
-(`brainCliCommand`, `[brain-kit] packages/ui-server/src/brain/client.ts:78-82`), then
-spawns that selection (`Bun.spawn(wrapCommand`, `[brain-kit] packages/ui-server/src/brain/client.ts:199-212`).
+(`brainCliCommand`, `[brain-kit] packages/ui-server/src/brain/client.ts:80-84`), then
+spawns that selection (`Bun.spawn(wrapCommand`, `[brain-kit] packages/ui-server/src/brain/client.ts:201-214`).
 The root entrypoint runs `bun install` in the repo, installs a dispatcher which again
 executes repo code, and asks
 `brain-ui-cron` to run `brain module list` during crontab generation
@@ -628,7 +628,7 @@ process, and closing it is not sufficient. pi's curated brain tools go through
 `initContext` loads the user config and the modules
 (`resolveRoot(opts.root)`, `[brain-kit] packages/core/src/lib/context.ts:36-38`), and
 `loadUserConfig` does a direct `await import(tsPath)` of the repo's
-`brain.config.ts` (`existsSync(tsPath)`, `[brain-kit] packages/core/src/lib/config.ts:361-363`).
+`brain.config.ts` (`existsSync(tsPath)`, `[brain-kit] packages/core/src/lib/config.ts:365-367`).
 `brain.config.ts` is executable code in an agent-writable tree, so a single pi
 brain tool call runs it as `brain` — with project trust off, with no extension loaded, and with every
 CLI-side mitigation in section 4 fully in place, because none of them apply to

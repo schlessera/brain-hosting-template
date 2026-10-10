@@ -1,3 +1,10 @@
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/brand/lockup-on-dark.svg">
+    <img src=".github/brand/lockup-on-paper.svg" alt="brain-kit" height="48">
+  </picture>
+</p>
+
 # brain-hosting-template
 
 > **Placeholder.** This repository is not usable yet. It is here so that the

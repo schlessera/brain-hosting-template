@@ -63,6 +63,19 @@ server DB, but it must not import the repository's TypeScript.
 
 ## 1. Directory ownership map
 
+> **2026-10-11 — Historical runtime target.** The standalone
+> `/opt/claude/bin/claude` row below is preserved from the
+> [original ownership map](https://github.com/schlessera/brain-hosting-template/blob/262444c3bbe9c18456afa70a2554ee5046a31101/docs/decisions/container-privilege.md#L80).
+> It is not the selected generated-image install. The
+> [bundled-runtime decision](https://github.com/schlessera/brain-kit/blob/main/docs/decisions/claude-code-runtime.md)
+> selects the SDK-owned platform binary, pinned by each install's lockfile;
+> [runtime identification](https://github.com/schlessera/brain-kit/commit/d33492e9d6680a7cb3c1e8a204aed7183431bc3d)
+> records the executed version. #1 owns frozen installation and immutable-path
+> proof for both host and content SDK resolutions. This evolved runtime choice
+> does not reverse privilege separation, establish a built container or
+> complete #1. Other ownership/migration targets below remain historical
+> design inputs requiring current-boundary review and actual container proof.
+
 Modes below are the required steady state after the one-time migration. Fixed
 numeric ids are part of the on-disk format: names are only presentation, while
 volumes store numbers. “Volume” includes a named volume or a deployment bind
@@ -402,6 +415,21 @@ that every process with that label runs at the same uid. The actual core CLI
 runs as `agent`; the `brainCli` audience describes its needs. Cron has two
 layers: the `brain` recorder may read `DB_PATH` and pricing settings, while the
 command it launches is stripped again before the helper drops to `agent`.
+
+> **2026-10-11 — Historical credential table.** The ambient
+> `ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN` assignments below preserve the
+> [original table](https://github.com/schlessera/brain-hosting-template/blob/262444c3bbe9c18456afa70a2554ee5046a31101/docs/decisions/container-privilege.md#L418-L419).
+> [Credential clearing and handshake enforcement](https://github.com/schlessera/brain-kit/commit/af2affb2e939cc39446abeaccc704b617d9e6fd7)
+> superseded their use as ambient credentials for credential-free Claude
+> profiles and the core Claude runner. Those paths require subscription auth
+> before prompt release; explicitly declared API profiles remain distinct.
+> Follow the current
+> [subscription boundary](https://github.com/schlessera/brain-kit/blob/main/docs/decisions/claude-code-runtime.md#what-binds)
+> and [login procedure](https://github.com/schlessera/brain-kit/blob/main/docs/hosting/README.md#claude-subscription-login),
+> using a separately named completion key through the package config route
+> rather than suggesting an ambient agent API key. This changes credential
+> implementation context, not the privilege decision. No generated-container
+> login/billing proof or completion of #1 is claimed.
 
 | Variable | Current audiences | 0.35.0 assignment |
 | --- | --- | --- |
@@ -984,6 +1012,17 @@ seccomp together are the acceptance evidence. Merely asserting the launch
 argument builder is not.
 
 ## 6. Questions not verified by this investigation
+
+> **2026-10-11 — Historical version assumption.** The CLI 2.1.236
+> question below is preserved from the
+> [original unverified questions](https://github.com/schlessera/brain-hosting-template/blob/262444c3bbe9c18456afa70a2554ee5046a31101/docs/decisions/container-privilege.md#L993-L997).
+> It does not identify this template's image: this record built no container.
+> The [runtime implementation](https://github.com/schlessera/brain-kit/commit/d33492e9d6680a7cb3c1e8a204aed7183431bc3d)
+> identifies the selected executable; use the actual lockfile/runtime pair and
+> [current measurement guidance](https://github.com/schlessera/brain-kit/blob/main/docs/decisions/claude-code-runtime.md)
+> when performing state-mode/history/cancellation proof. Package updates and
+> compatibility do not certify a generated image, reverse privilege separation
+> or complete #1; its real-container and reserved live checks remain separate.
 
 - **Does the target deployment permit the setuid helper and Chrome sandbox?**
   Source cannot answer daemon `no-new-privileges`, seccomp, LSM or host-kernel

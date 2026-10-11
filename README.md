@@ -55,10 +55,21 @@ that has actually run.
 - **Anybody's deployment specifics.** No hosts, no domains, no identifiers.
 - **Your content.** That is `brain-template`, mounted in.
 
+## Composition and upgrades
+
+The [generated-host decision](docs/decisions/generated-host.md) defines the
+file inventory, user-owned configuration/branding and separate package versus
+copied-file update procedures. It is a specification, not a working setup
+walkthrough. The placeholder notice above remains until clean-room proof and
+availability are established.
+
 ## Where the work is tracked
 
-In [schlessera/brain-kit](https://github.com/schlessera/brain-kit/issues) until
-this repository has enough shape to carry its own.
+Host/container composition work lives in
+[this repository's issues](https://github.com/schlessera/brain-hosting-template/issues).
+Package behavior lives in [brain-kit](https://github.com/schlessera/brain-kit/issues).
+The [self-hosting epic](https://github.com/schlessera/brain-kit/issues/70) connects
+the work; these repositories share the public project roadmap.
 
 ## License
 

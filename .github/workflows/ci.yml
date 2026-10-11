@@ -1,0 +1,31 @@
+name: Documentation
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: documentation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: host
+          fetch-depth: 2
+      - uses: actions/checkout@v7
+        with:
+          repository: schlessera/brain-kit
+          ref: 603234122c1d29fe338df806b4baf7ebd6a7877b
+          path: policy
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - name: Whole-tree public leakage gate
+        run: bun policy/scripts/check-leakage.ts host
+      - name: Whitespace
+        working-directory: host
+        run: git diff --check HEAD^ HEAD

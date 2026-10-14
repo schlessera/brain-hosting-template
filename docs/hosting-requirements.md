@@ -114,6 +114,35 @@ app's actual resolved output limits. See the
    Never point a formatting command at existing data based on this guide.
    Copy a stopped brain as data, preserving its file/Git metadata and reviewed
    ownership; do not execute its config, hooks or package scripts as host root.
+4. Before starting the manager, app or cron, and **before any checkpoint**,
+   prepare the imported brain's protected Git directories as described below.
+
+**Prepare protected Git directories before the first checkpoint.**
+
+While all writers remain stopped, inspect the canonical live brain and its
+`.git` directory without following symlinks. Require real directories; stop
+if `.git` is a symlink, a Git worktree pointer file or another unexpected type.
+Inspect `.git/hooks`, `.git/info` and `.git/modules` the same way:
+
+- If a path is already a real directory, preserve its contents, ownership and
+  permissions. Do not empty it or recursively change ownership.
+- If a path is absent, create only that empty directory with
+  `mkdir --mode=0755 -- PATH`, using the reviewed Git metadata owner and group.
+  Verify its actual type, ownership and 0755 mode afterward; an active umask
+  can reduce the requested mode. Do not use `mkdir -p` to hide parent mistakes.
+- If a path is a symlink or any non-directory type, stop and investigate rather
+  than replacing it. This step does not execute Git, hooks, config or packages.
+
+Published 0.43.0 can take a
+[standalone maintenance checkpoint](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-server/src/brain/host-boundary.ts#L438-L449)
+before
+[`resolveWorkerProtection` creates absent protected directories](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-sdk/src/server/worker-protection.ts#L39-L75).
+An empty directory then appearing in the worker output can be refused as a
+protected-input change by the
+[native publisher](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-sdk/src/server/worker-native-output.ts#L148-L160).
+Prepare all three before the first snapshot; do not rely on a status request
+to prepare them. This is an initial-store workaround, not a runtime fix or a
+change to protected-path enforcement.
 
 For the selected store, provide one **read-write top-level Btrfs mount** on one
 fixed block device, with the live subvolume at `STORE/brain`. The store and its

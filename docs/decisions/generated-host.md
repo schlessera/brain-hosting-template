@@ -19,6 +19,7 @@ No maintainer-only AGENTS.md, CLAUDE.md, skills or tracker policy belongs here.
 | `src/client.tsx`, `src/styles.css`, `index.html` | Template | Mount package UI and import its shipped styles; identity and branding come from user files. No copied components or state machines. |
 | `src/service-worker.ts`, `public/manifest.webmanifest`, `public/offline.html` | Template | Use public SDK worker/cached-shell APIs; host owns asset URLs, manifest declarations and build integration. #10 owns track share declarations; #11 owns cached/offline shell integration. |
 | `Dockerfile`, `.dockerignore`, `compose.yaml`, `bin/entrypoint.sh` | Template | Frozen image install/build, mounts and process wiring. Do not download dependencies or update runtimes at boot. Container policy is qualified, never inferred from this inventory. |
+| Native manager service/configuration and fixed store mounts | Template; capacity, reserve and device chosen by the generated-host owner | Compose the released `brain-native-store` service outside app/worker authority. Keep its fixed root-owned configuration outside the brain, share the required PID namespace and managed paths, and stop the app before the manager. No template storage engine, automatic formatting or growth. |
 | `config/Caddyfile` | Template | One documented HTTPS reverse-proxy path. Domain supplied by user; no hardcoded installation identity. Keep backend ports private. |
 | `.env.example`, `config/host-requirements.ts` | Template | Generic placeholders and checked-in host minima; descriptors and package enforcement own environment semantics. No credential values or default public unauthenticated mode. |
 | `.env`, `config/local.env`, `branding/` | Generated-host user | Secrets and site identity. Real environment files are ignored and never copied into image layers; branding assets are explicitly user-owned. Preserve these during upgrades. |
@@ -48,8 +49,8 @@ Compile the host against installed ordinary exports, with no source-condition
 forcing, workspace links or private checkout dependencies.
 
 The server composition follows the public
-[server entry point](https://github.com/schlessera/brain-kit/blob/603234122c1d29fe338df806b4baf7ebd6a7877b/packages/ui-server/src/index.ts#L1-L23)
-and [package example](https://github.com/schlessera/brain-kit/blob/603234122c1d29fe338df806b4baf7ebd6a7877b/packages/ui-server/README.md).
+[server entry point](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-server/src/index.ts#L1-L23)
+and [package example](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-server/README.md).
 These source links explain the intended composition; they do not assert that
 all current-main APIs are on the registry. #7 establishes declarations and
 own-importer build proof against the selected containing release. The content
@@ -58,13 +59,23 @@ Both content and host installs must resolve the bundled Claude runtime; #1
 owns the container proof and its content dependency is brain-template#1.
 
 Populate ignored configuration/secrets and user branding. Consume the package
-[environment descriptors](https://github.com/schlessera/brain-kit/blob/603234122c1d29fe338df806b4baf7ebd6a7877b/packages/ui-server/src/config/env.ts)
-and [generated reference](https://github.com/schlessera/brain-kit/blob/603234122c1d29fe338df806b4baf7ebd6a7877b/packages/ui-server/README.md#environment).
+[environment descriptors](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-server/src/config/env.ts)
+and [generated reference](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-server/README.md#environment).
 Reference these instead of maintaining a second full environment table. Only
 setup-relevant examples belong in `.env.example`. Keep auth enabled, verify
 proxy trust/exposure, then perform the documented startup refusal and login
 checks before starting an agent. Login/token minting remains maintainer-reserved
 where #1 says so; keyless proof can precede it.
+
+Published 0.43.0 changes the hosting prerequisites: `createApp` requires the
+managed native Btrfs service. Follow the
+[hosting requirements and deployment sequence](../hosting-requirements.md)
+for the released launcher/configuration, private-path boundaries and stopped
+import. The finite physical store, 10 GiB logical retained-history cap and
+RAM/tmpfs worker budgets are distinct. Total capacity and recovery reserve are
+explicit operator choices. #20 owns generated native-store wiring and its
+clean-room proof; this specification does not deliver those files or certify
+the generated container.
 
 ## Two upgrade procedures
 

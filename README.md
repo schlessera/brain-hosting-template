@@ -63,6 +63,13 @@ copied-file update procedures. It is a specification, not a working setup
 walkthrough. The placeholder notice above remains until clean-room proof and
 availability are established.
 
+For an existing host adopting the published **brain-kit 0.43.0** packages, read
+the [hosting requirements and deployment sequence](docs/hosting-requirements.md).
+Hosted startup now requires a qualified, fixed-capacity managed Btrfs store and
+its separate root-owned manager. A package upgrade alone does not provision
+that service or update copied container files. There is no full-copy fallback.
+This guidance does not make the placeholder a runnable generated host.
+
 ## Where the work is tracked
 
 Host/container composition work lives in

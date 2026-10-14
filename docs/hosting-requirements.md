@@ -245,6 +245,24 @@ not a replacement for authentication, worker isolation or resource limits.
 ## Qualification, shutdown and recovery
 
 Start the manager first, then the unprivileged app using package `createApp`.
+Wait for manager readiness, await app startup and open its listener before
+starting separate cron module discovery. Initial app qualification and cron
+discovery share maintenance reservations; starting them concurrently can leave
+the initial governed posture unavailable. Manager readiness alone is not the
+signal to start discovery.
+
+For an independently supervised cron process, wait with a bounded deadline on
+`http://127.0.0.1:PORT/api/health` in the app's network namespace, using its
+configured port. Require HTTP
+200 and JSON `status: "healthy"`; send no auth and accept no redirects. On
+timeout or refusal, preserve diagnostics and leave discovery stopped. The
+[released composition](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-server/README.md#L19-L36)
+opens the listener after awaited `createApp`, which
+[awaits initial boundary preparation](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-server/src/app.ts#L380-L381).
+The [public health route](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/packages/ui-server/src/routes/health.ts#L13-L36)
+checks app/database liveness; it does **not** prove governed availability.
+Keep the separate status and execution qualification below.
+
 Do not run repository configuration, Git hooks, a content CLI or `bun install`
 from the root boot/supervisor path. Content-executing maintenance belongs in
 the package's admitted workers, after native and worker qualification. A

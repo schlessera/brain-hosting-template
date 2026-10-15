@@ -23,6 +23,12 @@ offline rehearsal while production-specific decisions are pending. Existing
 task authorization applies; do not ask the operator to approve the same action
 again.
 
+Check the guide's AppArmor prerequisite when non-root namespaces fail. Prefer
+an explicitly selected app-specific user-namespace permission over disabling
+the host-wide restriction. Preserve existing enforcing policy; the guide's
+unconfined example does not add a MAC sandbox. Verify the effective profile,
+both worker paths and rendering on the real host before cutover.
+
 Use the linked guide's ownership and proof requirements. Keep the native
 manager privileged, drop identity before all content-aware execution, preserve
 bounded worker storage and retain existing filesystem/subvolume identity.

@@ -53,6 +53,42 @@ individually. Supervisor, system cron and syslog may remain trusted root
 processes. Do not grant app/worker `CAP_SYS_ADMIN`, host PID access or an
 unfiltered seccomp profile to make a failed probe pass.
 
+### AppArmor restrictions on unprivileged user namespaces
+
+On hosts with `kernel.apparmor_restrict_unprivileged_userns=1`, a container
+using `apparmor=unconfined` can still fail a non-root worker's UID-map setup.
+Check the kernel audit record as well as the worker readiness result. HTTP
+health alone does not prove that ordinary or maintenance workers can start.
+
+If this restriction is the cause, an operator can retain it globally and
+load a named, app-specific profile using Ubuntu's
+[documented exception mechanism](https://documentation.ubuntu.com/release-notes/24.04/#restricted-unprivileged-user-namespaces):
+
+```text
+abi <abi/4.0>,
+profile odysseus_worker_userns flags=(unconfined) {
+  userns,
+}
+```
+
+Validate the installed AppArmor parser's support, install the reviewed profile
+as a root-owned file under `/etc/apparmor.d/`, and load it with
+`apparmor_parser -r <profile-file>`. Do not overwrite an unrelated profile.
+Attach it only to the app container with
+`--security-opt=apparmor=odysseus_worker_userns`. Inspect the effective
+container profile and verify that the host-wide restriction remains enabled.
+Verify the platform’s option parser preserves the complete profile name.
+Preserve the other qualified container security options.
+
+This example preserves an existing unconfined file/network policy while
+explicitly allowing user namespaces. It does not add a MAC boundary and must
+not replace an existing enforcing profile without a separate policy review.
+Keep package masks, worker capability drops, seccomp and bounded native
+storage. Rerun both backends, actual outside UID/capability checks, lifecycle
+cleanup and the renderer on this host. Retain the profile across reboots and
+while any container uses it; rollback restores the previous recorded container
+option before removing an unused profile.
+
 ## Ownership and path rules
 
 Move executable tools out of `/root` into immutable root-owned locations

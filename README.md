@@ -70,6 +70,10 @@ its separate root-owned manager. A package upgrade alone does not provision
 that service or update copied container files. There is no full-copy fallback.
 This guidance does not make the placeholder a runnable generated host.
 
+For the focused **0.43.1 Pi startup patch**, follow the
+[package-adoption notes](docs/hosting-requirements.md#0431-pi-patch-adoption).
+The existing native-store requirements still apply.
+
 ## Where the work is tracked
 
 Host/container composition work lives in

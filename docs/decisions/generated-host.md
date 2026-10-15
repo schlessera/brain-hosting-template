@@ -24,6 +24,7 @@ No maintainer-only AGENTS.md, CLAUDE.md, skills or tracker policy belongs here.
 | `.env.example`, `config/host-requirements.ts` | Template | Generic placeholders and checked-in host minima; descriptors and package enforcement own environment semantics. No credential values or default public unauthenticated mode. |
 | `.env`, `config/local.env`, `branding/` | Generated-host user | Secrets and site identity. Real environment files are ignored and never copied into image layers; branding assets are explicitly user-owned. Preserve these during upgrades. |
 | `.gitignore`, `README.md`, `docs/setup.md`, `docs/upgrading.md`, `docs/troubleshooting.md`, `LICENSE` | Template | Self-hoster instructions and legal text only; no contributor tracker/agent policy. License must be supplied before public distribution. |
+| `.agents/skills/host-uid-migration/SKILL.md` | Template | Operator guidance for identity migration and its required evidence. Contains no maintainer tracker policy or installation-specific values; does not implement the migration. |
 | `scripts/build.ts`, `scripts/check-host.ts`, `scripts/check-shell.ts`, `scripts/check-leakage.ts`, `scripts/check-pr.ts`, `tests/`, `bunfig.toml`, `.github/workflows/ci.yml` | Template | Build/verification glue, own-importer checks, frozen installs, offline tests and whole-tree leakage checks. No alternative application enforcement. CI uses GitHub Actions. |
 
 The brain's Markdown, config, own package manifest/lockfile and disposable

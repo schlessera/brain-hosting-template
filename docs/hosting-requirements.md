@@ -16,6 +16,30 @@ no copied-input fallback. The binding public contract is the
 [native storage decision](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/docs/decisions/native-brain-storage.md)
 and [released package API](https://github.com/schlessera/brain-kit/blob/5dc2595ca07042f2e2024c95bbc361f31637559f/docs/integration-contract/package-api.md#native-hosted-storage-breaking-host-requirement-1790).
 
+## 0.43.1 Pi patch adoption
+
+The published 0.43.1 patch repairs Pi SDK startup state routing while preserving
+the existing native store, worker protections and persisted authentication.
+Verify the matching 0.43.1 package identities against the registry before
+adopting them. Follow the existing
+[dependency-upgrade procedure](decisions/generated-host.md#two-upgrade-procedures):
+update the host's matching package versions and lockfile, review the loaded
+SDK/runtime identities, then perform a frozen rebuild and qualification.
+Keep the separately installed content CLI compatible. An existing qualified
+0.43.0 store does not need reprovisioning or a history reset for this patch.
+
+If Pi uses global npm packages, prepare the operator-configured packages in
+the selected Pi agent directory, outside the brain, before starting turns.
+A settings entry alone does not prove an installed, matching package. Ordinary
+workers reuse that directory's prepared `npm/node_modules` tree read-only;
+SDK settings, models and login writes use bounded private per-turn state.
+Keep the prepared package tree stable while turns initialize. Missing or
+mismatched configured packages report a setup error, rather than installing
+them during the turn ([backend setup requirement](https://github.com/schlessera/brain-kit/blob/f691c5b62a0ffcca67bedfee0be6557631d0930d/packages/ui-backend-pi/README.md#L295-L301)).
+This does not require new plugins or an agent-directory override. Prepare
+trusted installed resources through the host's reviewed setup procedure;
+do not run repository configuration or package installation from root boot.
+
 ## Required topology
 
 Use a qualified Linux x86-64 container host. The native manager runs as root in

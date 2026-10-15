@@ -42,6 +42,12 @@ do not run repository configuration or package installation from root boot.
 
 ## Required topology
 
+Before changing service users, follow the
+[identity and ownership migration requirements](worker-identities.md).
+Running app and workers as one non-root UID and separating workers onto a
+second UID are different transitions. The latter is not delivered by 0.43.1.
+Keep the native manager's privilege separate from either change.
+
 Use a qualified Linux x86-64 container host. The native manager runs as root in
 the initial user namespace; trusted OverlayFS setup checks that identity.
 Use **Bun 1.4.2**, the runtime pinned by the release's

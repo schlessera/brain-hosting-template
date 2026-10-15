@@ -27,6 +27,20 @@ and each would have passed against a broken implementation.
 
 ## Decision
 
+> **2026-10-15 — Current implementation boundary.** The version targets and
+> helper sketch below are historical design, not delivered behavior in
+> 0.43.1. Read [worker identities and migration requirements](../worker-identities.md)
+> before using them. The maintainer's
+> [2026-10-14 broker ruling](https://github.com/schlessera/brain-kit/issues/1677)
+> requires one unprivileged external supervisor per worker, narrow authenticated
+> privileged helpers, retained verified bounded mount handles, a fixed
+> uncredentialed worker-UID reader and termination on supervision loss.
+> An argv-only setuid helper cannot provide cross-UID `/proc` mount access or
+> post-exit recovery. The approved broker replaces that mechanism; it preserves
+> the selected two identities and server-private ownership boundary. Runtime
+> delivery and qualification remain upstream; production packaging remains #18.
+> The Btrfs manager is a separate trusted root service, not the application.
+
 0.35.0 should use two fixed numeric users and an exec-in-place setuid helper:
 
 - `brain` is uid/gid 10001/10001 and runs the server, the cron recorder and

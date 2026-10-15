@@ -74,6 +74,12 @@ For the focused **0.43.1 Pi startup patch**, follow the
 [package-adoption notes](docs/hosting-requirements.md#0431-pi-patch-adoption).
 The existing native-store requirements still apply.
 
+For a standing root-worker warning or a planned user change, read
+[worker identities and migration requirements](docs/worker-identities.md).
+The [host-uid-migration skill](.agents/skills/host-uid-migration/SKILL.md)
+guides a host operator through preparation and qualification. These documents
+do not supply the pending container or separate-UID helper implementation.
+
 ## Where the work is tracked
 
 Host/container composition work lives in
